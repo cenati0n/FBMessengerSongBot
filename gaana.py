@@ -38,29 +38,48 @@ def get_song_info(song):
 	 	return FAILURE_MSG
 	if song_info['message']['header']['available'] == 0:
 		return NORESULTS_MSG
-	msg = "Track: " + song_info['message']['body']['track_list'][0]['track']['track_name'] 
-	msg += "\nAlbum: " + song_info['message']['body']['track_list'][0]['track']['album_name']
-	msg += "\nArtist: " + song_info['message']['body']['track_list'][0]['track']['artist_name']
-	lyrics_url = song_info['message']['body']['track_list'][0]['track']['track_share_url']
-	data = {"info":msg , "lyrics_url":lyrics_url}
+	data = {}
+	data['track'] = "Track: " + song_info['message']['body']['track_list'][0]['track']['track_name'] 
+	data['album'] = "Album: " + song_info['message']['body']['track_list'][0]['track']['album_name']
+	data['artist'] = "Artist: " + song_info['message']['body']['track_list'][0]['track']['artist_name']
+	data['lyrics_url'] = song_info['message']['body']['track_list'][0]['track']['track_share_url']
+	data['image_url'] = song_info['message']['body']['track_list'][0]['track']['album_coverart_500x500']
 	return data
 
-def send_msg(user_id,message,lyrics_url):
+def send_msg(msg):
     data = {
-        "recipient": {"id": user_id},
+        "recipient": {"id": msg['sender_id']},
         "message": {
         	"attachment":{
         		"type": "template",
 	        	"payload":{
-					"template_type":"button",
-					"text":message,
-					"buttons":[
+					"template_type":"generic",
+					"elements":[
 						{
-							"type":"web_url",
-							"url":lyrics_url,
-							"title": SHOW_LYRICS
+							"title":msg['track'],
+							"image_url": msg['image_url'],
+							"subtitle": msg['album'] + "\n" + msg['artist'],
+							"buttons":[
+								{
+									"type":"web_url",
+									"url":msg['lyrics_url'],
+									"title": SHOW_LYRICS
+								}
+			        		]
+						},
+						{
+							"title":msg['track'],
+							"image_url": msg['image_url'],
+							"subtitle": msg['album'] + "\n" + msg['artist'],
+							"buttons":[
+								{
+									"type":"web_url",
+									"url":msg['lyrics_url'],
+									"title": SHOW_LYRICS
+								}
+			        		]
 						}
-	        		]
+					]
 	        	}
         	}
         }
@@ -72,8 +91,9 @@ def handle_incoming_messages():
 	data = request.json
 	sender_id = data['entry'][0]['messaging'][0]['sender']['id']
 	song = data['entry'][0]['messaging'][0]['message']['text']
-	track_info = get_song_info(song)
-	send_msg(sender_id,track_info['info'],track_info['lyrics_url'])
+	msg = get_song_info(song)
+	msg["sender_id"] = sender_id
+	send_msg(msg)
 	return "ok"
 
 if __name__ == '__main__':
