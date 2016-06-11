@@ -1,12 +1,20 @@
 from flask import Flask, request
 import requests
+import json
 
 app = Flask(__name__)
 
 FBAPI_TOKEN = "EAAIQpPZCH35ABAAGjLihZAOm3yVcXjDH7mjM6u06pgNbBnZAdLh18lryJ9NN1SidsTjAG0zl2iRy1gigKwSc400Q9hE5GV88YfCLC7t84RFuNNVOjVeAdHNJFcpodkNZBqekdNZC08cfg2Te4XeHwxk6heSR5dKPq7M5aiVxInAZDZD"
 VERIFY_TOKEN = "topsecret"
+MM_TOKEN = "5927ab827d8781120cc4779f67e043cd"
 
 FB_URL = "https://graph.facebook.com/v2.6/me/messages?access_token=" + FBAPI_TOKEN
+MM_URL = "https://api.musixmatch.com/ws/1.1/track.search"
+
+SUCCESS = 200
+DESCENDING = "DESC"
+FAILURE_MSG = "Something went wrong! :("
+NORESULTS_MSG = "No results found! :("
 
 @app.route('/', methods=['GET'])
 def handle_verification():
@@ -15,19 +23,38 @@ def handle_verification():
 	else:
 		return "Verification Failed!"
 
+def get_song_info(song):
+	params = {
+		'apikey' : MM_TOKEN, 
+		'q_lyrics' : song ,
+		's_track_rating' : DESCENDING,
+		's_artist_rating' : DESCENDING,
+		'format' : 'json' }
+	resp=requests.get(MM_URL,params=params)
+	song_info = resp.json()
+	if song_info['message']['header']['status_code'] != 200:
+	 	return FAILURE_MSG
+	if song_info['message']['header']['available'] == 0:
+		return NORESULTS_MSG
+	msg = "Track: " + song_info['message']['body']['track_list'][0]['track']['track_name'] 
+	msg += "\nAlbum: " + song_info['message']['body']['track_list'][0]['track']['album_name']
+	msg += "\nArtist: " + song_info['message']['body']['track_list'][0]['track']['artist_name']
+	print msg
+	return msg
+
 def send_msg(user_id,message):
     data = {
         "recipient": {"id": user_id},
         "message": {"text": message}
     }
     resp = requests.post(FB_URL, json=data)
-    print(resp.url)
 
 @app.route('/', methods=['POST'])
 def handle_incoming_messages():
 	data = request.json
 	sender_id = data['entry'][0]['messaging'][0]['sender']['id']
-	message = data['entry'][0]['messaging'][0]['message']['text']
+	song = data['entry'][0]['messaging'][0]['message']['text']
+	message = get_song_info(song)
 	send_msg(sender_id,message)
 	return "ok"
 
