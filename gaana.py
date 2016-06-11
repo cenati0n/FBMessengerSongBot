@@ -1,4 +1,5 @@
 from flask import Flask, request
+from pprint import pprint
 import requests
 import json
 
@@ -34,57 +35,97 @@ def get_song_info(song):
 		'format' : 'json' }
 	resp=requests.get(MM_URL,params=params)
 	song_info = resp.json()
-	if song_info['message']['header']['status_code'] != 200:
-	 	return FAILURE_MSG
-	if song_info['message']['header']['available'] == 0:
-		return NORESULTS_MSG
 	data = {}
-	data['track'] = "Track: " + song_info['message']['body']['track_list'][0]['track']['track_name'] 
-	data['album'] = "Album: " + song_info['message']['body']['track_list'][0]['track']['album_name']
-	data['artist'] = "Artist: " + song_info['message']['body']['track_list'][0]['track']['artist_name']
-	data['lyrics_url'] = song_info['message']['body']['track_list'][0]['track']['track_share_url']
-	data['image_url'] = song_info['message']['body']['track_list'][0]['track']['album_coverart_500x500']
+	data['status_code'] = song_info['message']['header']['status_code'] 
+	data['size'] = song_info['message']['header']['available']
+	data['track_list'] = []
+	item = {}
+	count = 1
+	if song_info['message']['header']['status_code'] == 200:
+		for i in song_info['message']['body']['track_list']:
+			if count > 5:
+				break;
+			item['track'] = "Track: " + i['track']['track_name'] 
+			item['album'] = "Album: " + i['track']['album_name']
+			item['artist'] = "Artist: " + i['track']['artist_name']
+			item['lyrics_url'] = i['track']['track_share_url']
+			item['image_url'] = i['track']['album_coverart_500x500']
+			data['track_list'].append(item.copy())
+			#print item
+			count += 1
+	#pprint(data)
 	return data
 
 def send_msg(msg):
-    data = {
-        "recipient": {"id": msg['sender_id']},
-        "message": {
-        	"attachment":{
-        		"type": "template",
-	        	"payload":{
-					"template_type":"generic",
-					"elements":[
-						{
-							"title":msg['track'],
-							"image_url": msg['image_url'],
-							"subtitle": msg['album'] + "\n" + msg['artist'],
-							"buttons":[
-								{
-									"type":"web_url",
-									"url":msg['lyrics_url'],
-									"title": SHOW_LYRICS
-								}
-			        		]
-						},
-						{
-							"title":msg['track'],
-							"image_url": msg['image_url'],
-							"subtitle": msg['album'] + "\n" + msg['artist'],
-							"buttons":[
-								{
-									"type":"web_url",
-									"url":msg['lyrics_url'],
-									"title": SHOW_LYRICS
-								}
-			        		]
-						}
-					]
-	        	}
-        	}
-        }
-    }
-    resp = requests.post(FB_URL, json=data)
+	data = {}
+	data['recipient'] = {'id': msg['sender_id']}
+	if msg['status_code'] != 200:
+		data['message'] = {'text':FAILURE_MSG}
+	elif msg['size'] == 0:
+		data['message'] = {'text':NORESULTS_MSG}
+	else:
+		data['message'] = {}
+		data['message']['attachment'] = {}
+		#data['message']['attachment']['type'] = {} 
+		data['message']['attachment']['type']='template'
+		data['message']['attachment']['payload'] = {}
+		data['message']['attachment']['payload']['template_type']='generic'
+		data['message']['attachment']['payload']['elements']=[]
+		item={}
+		for i in msg['track_list']:
+			item['title']=i['track']
+			item['image_url']=i['image_url']
+			item['subtitle']=i['album'] + '\n' + i['artist']
+			item['buttons']=[
+				{
+					"type":"web_url",
+					"url" : i['lyrics_url'],
+					"title": SHOW_LYRICS 
+				}
+			]
+
+			data['message']['attachment']['payload']['elements'].append(item.copy())
+	pprint(data)
+	resp = requests.post(FB_URL, json=data)
+
+    # data = {
+    #     "recipient": {"id": msg['sender_id']},
+    #     "message": {
+    #     	"attachment":{
+    #     		"type": "template",
+	   #      	"payload":{
+				# 	"template_type":"generic",
+				# 	"elements":[
+				# 		{
+				# 			"title":msg['track'],
+				# 			"image_url": msg['image_url'],
+				# 			"subtitle": msg['album'] + "\n" + msg['artist'],
+				# 			"buttons":[
+				# 				{
+				# 					"type":"web_url",
+				# 					"url":msg['lyrics_url'],
+				# 					"title": SHOW_LYRICS
+				# 				}
+			 #        		]
+				# 		},
+				# 		{
+				# 			"title":msg['track'],
+				# 			"image_url": msg['image_url'],
+				# 			"subtitle": msg['album'] + "\n" + msg['artist'],
+				# 			"buttons":[
+				# 				{
+				# 					"type":"web_url",
+				# 					"url":msg['lyrics_url'],
+				# 					"title": SHOW_LYRICS
+				# 				}
+			 #        		]
+				# 		}
+				# 	]
+	   #      	}
+    #     	}
+    #     }
+    # }
+    # resp = requests.post(FB_URL, json=data)
 
 @app.route('/', methods=['POST'])
 def handle_incoming_messages():
