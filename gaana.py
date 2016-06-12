@@ -30,8 +30,6 @@ def get_song_info(song):
 		'apikey' : MM_TOKEN, 
 		'q_lyrics' : song ,
 		'f_has_lyrics':1,
-		's_track_rating' : DESCENDING,
-		's_artist_rating' : DESCENDING,
 		'format' : 'json' }
 	resp=requests.get(MM_URL,params=params)
 	song_info = resp.json()
@@ -66,7 +64,6 @@ def send_msg(msg):
 	else:
 		data['message'] = {}
 		data['message']['attachment'] = {}
-		#data['message']['attachment']['type'] = {} 
 		data['message']['attachment']['type']='template'
 		data['message']['attachment']['payload'] = {}
 		data['message']['attachment']['payload']['template_type']='generic'
@@ -88,53 +85,15 @@ def send_msg(msg):
 	pprint(data)
 	resp = requests.post(FB_URL, json=data)
 
-    # data = {
-    #     "recipient": {"id": msg['sender_id']},
-    #     "message": {
-    #     	"attachment":{
-    #     		"type": "template",
-	   #      	"payload":{
-				# 	"template_type":"generic",
-				# 	"elements":[
-				# 		{
-				# 			"title":msg['track'],
-				# 			"image_url": msg['image_url'],
-				# 			"subtitle": msg['album'] + "\n" + msg['artist'],
-				# 			"buttons":[
-				# 				{
-				# 					"type":"web_url",
-				# 					"url":msg['lyrics_url'],
-				# 					"title": SHOW_LYRICS
-				# 				}
-			 #        		]
-				# 		},
-				# 		{
-				# 			"title":msg['track'],
-				# 			"image_url": msg['image_url'],
-				# 			"subtitle": msg['album'] + "\n" + msg['artist'],
-				# 			"buttons":[
-				# 				{
-				# 					"type":"web_url",
-				# 					"url":msg['lyrics_url'],
-				# 					"title": SHOW_LYRICS
-				# 				}
-			 #        		]
-				# 		}
-				# 	]
-	   #      	}
-    #     	}
-    #     }
-    # }
-    # resp = requests.post(FB_URL, json=data)
-
 @app.route('/', methods=['POST'])
 def handle_incoming_messages():
 	data = request.json
-	sender_id = data['entry'][0]['messaging'][0]['sender']['id']
-	song = data['entry'][0]['messaging'][0]['message']['text']
-	msg = get_song_info(song)
-	msg["sender_id"] = sender_id
-	send_msg(msg)
+	for sender in data['entry'][0]['messaging']:
+		sender_id = sender['sender']['id']
+		song = sender['message']['text']
+		msg = get_song_info(song)
+		msg["sender_id"] = sender_id
+		send_msg(msg)
 	return "ok"
 
 if __name__ == '__main__':
