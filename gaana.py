@@ -16,6 +16,7 @@ SUCCESS = 200
 DESCENDING = "DESC"
 FAILURE_MSG = "Something went wrong! :("
 NORESULTS_MSG = "No results found! :("
+INVALID_MSG = "PLease send text message"
 SHOW_LYRICS = "Show Lyrics\t\t\t\t\t\t"
 
 @app.route('/', methods=['GET'])
@@ -54,6 +55,11 @@ def get_song_info(song):
 	#pprint(data)
 	return data
 
+def send_error_msg(sender_id)
+	data = {}
+	data['recipient'] = {'id': msg['sender_id']}
+	data['message'] = {'text':INVALID_MSG}
+
 def send_msg(msg):
 	data = {}
 	data['recipient'] = {'id': msg['sender_id']}
@@ -82,18 +88,20 @@ def send_msg(msg):
 			]
 
 			data['message']['attachment']['payload']['elements'].append(item.copy())
-	pprint(data)
+	#pprint(data)
 	resp = requests.post(FB_URL, json=data)
 
 @app.route('/', methods=['POST'])
 def handle_incoming_messages():
 	data = request.json
-	for sender in data['entry'][0]['messaging']:
-		sender_id = sender['sender']['id']
-		song = sender['message']['text']
+	sender_id = data['entry'][0]['messaging'][0]['sender']['id']
+	if 'text' in data['entry'][0]['messaging'][0]['message']:
+		song = data['entry'][0]['messaging'][0]['message']['text'].encode('unicode_escape')
 		msg = get_song_info(song)
 		msg["sender_id"] = sender_id
 		send_msg(msg)
+	else:
+		send_error_msg(sender_id)
 	return "ok"
 
 if __name__ == '__main__':
