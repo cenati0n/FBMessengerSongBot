@@ -57,7 +57,7 @@ def get_song_info(song):
 
 def send_error_msg(sender_id)
 	data = {}
-	data['recipient'] = {'id': msg['sender_id']}
+	data['recipient'] = {'id': sender_id}
 	data['message'] = {'text':INVALID_MSG}
 
 def send_msg(msg):
