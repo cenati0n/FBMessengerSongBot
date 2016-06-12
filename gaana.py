@@ -55,10 +55,11 @@ def get_song_info(song):
 	#pprint(data)
 	return data
 
-def send_error_msg(sender_id)
+def send_error_msg(sender_id):
 	data = {}
 	data['recipient'] = {'id': sender_id}
 	data['message'] = {'text':INVALID_MSG}
+	resp = requests.post(FB_URL, json=data)
 
 def send_msg(msg):
 	data = {}
