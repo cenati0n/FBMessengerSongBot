@@ -5,7 +5,7 @@ import json
 
 app = Flask(__name__)
 
-FBAPI_TOKEN = "EAAIQpPZCH35ABAAGjLihZAOm3yVcXjDH7mjM6u06pgNbBnZAdLh18lryJ9NN1SidsTjAG0zl2iRy1gigKwSc400Q9hE5GV88YfCLC7t84RFuNNVOjVeAdHNJFcpodkNZBqekdNZC08cfg2Te4XeHwxk6heSR5dKPq7M5aiVxInAZDZD"
+FBAPI_TOKEN = "EAAIQpPZCH35ABAO5TTIl9eyvvgoqkPPLXmICRigJkZBtVc2nLUwmbrptM1MMhcczlW3zBDl1igfM2Mdkdab2Jf9o9hzQ8wZBwRALxSml4UCmBELcy57jyk6S4svWJmZB9j4azt555ECszG65k6ZBMEVj8ci8M8i5uxUwZASaVXZAQZDZD"
 VERIFY_TOKEN = "topsecret"
 MM_TOKEN = "5927ab827d8781120cc4779f67e043cd"
 
@@ -16,7 +16,7 @@ SUCCESS = 200
 DESCENDING = "DESC"
 FAILURE_MSG = "Something went wrong! :("
 NORESULTS_MSG = "No results found! :("
-INVALID_MSG = "PLease send text message"
+INVALID_MSG = "Please send text message"
 SHOW_LYRICS = "Show Lyrics\t\t\t\t\t\t"
 
 @app.route('/', methods=['GET'])
